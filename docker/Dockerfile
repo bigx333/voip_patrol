@@ -1,19 +1,24 @@
-FROM python:3.7-buster
+FROM python:3.7-bookworm
 
 ARG VERSION="0.7.4"
 
 RUN echo "installing dependencies" \
 	&& apt-get update && apt-get install -y build-essential libcurl4-openssl-dev cmake pkg-config libasound2-dev \
-	&& apt-get -y install libssl-dev git
+	&& apt-get -y install libssl-dev git libbcg729-dev libopus-dev
 
-RUN echo "building VoIP Patrol" \
-	&& mkdir /git && cd /git && git clone https://github.com/jchavanton/voip_patrol.git \
+RUN echo "building pjproject" \
+	&& mkdir /git && cd /git && git clone https://github.com/bigx333/voip_patrol.git \
 	&& cd voip_patrol && git checkout ${VERSION} \
 	&& git submodule update --init \
 	&& cp include/config_site.h  pjproject/pjlib/include/pj/config_site.h \
 	&& cd pjproject && ./configure --disable-libwebrtc --disable-opencore-amr \
-	&& make dep && make && make install \
-	&& cd .. && cmake CMakeLists.txt && make
+	&& make dep && make && make install
+
+
+
+RUN echo "building VoIP Patrol" \
+	&& cd /git/voip_patrol \
+	&& cmake CMakeLists.txt && make
 
 RUN ln -s /git/voip_patrol/voice_ref_files /voice_ref_files
 
